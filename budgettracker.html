@@ -5,13 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Budget Tracker</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <style>
         :root {
             --primary-color: #5664d2;
+            --primary-dark: #4254c7;
             --warning-color: #f9a825;
             --danger-color: #e53935;
             --success-color: #43a047;
+            --gradient-start: #5664d2;
+            --gradient-end: #7c8bff;
         }
+        
+        * {
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+        
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
@@ -20,213 +30,658 @@
             margin: 0 auto;
             padding: 20px;
             background-color: #f5f7fb;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(120, 140, 255, 0.05) 0%, rgba(86, 100, 210, 0.1) 90%),
+                linear-gradient(to right, rgba(245, 247, 251, 0.9) 0%, rgba(245, 247, 251, 0.9) 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
         }
+        
+        #app-container {
+            display: none;
+            animation-duration: 0.8s;
+        }
+        
+        #login-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 80vh;
+            animation-duration: 0.8s;
+        }
+        
         .container {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
         }
+        
         @media (max-width: 768px) {
             .container {
                 grid-template-columns: 1fr;
             }
         }
+        
         h1, h2, h3 {
             color: #2c3e50;
         }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+            padding-bottom: 15px;
+        }
+        
+        h1:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
+        }
+        
+        .login-card {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(86, 100, 210, 0.2);
+            width: 400px;
+            max-width: 100%;
+            text-align: center;
+        }
+        
+        .login-logo {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
         .card {
             background: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            transform: translateY(0);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .form-group {
             margin-bottom: 20px;
         }
-        .form-group {
-            margin-bottom: 15px;
-        }
+        
         label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             font-weight: 600;
+            color: #2c3e50;
         }
+        
         input, select {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             border: 1px solid #ddd;
-            border-radius: 4px;
+            border-radius: 6px;
             font-size: 16px;
+            background-color: #f8f9fc;
         }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(86, 100, 210, 0.1);
+        }
+        
         button {
-            background-color: var(--primary-color);
+            background: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
             color: white;
             border: none;
-            padding: 12px 20px;
-            border-radius: 4px;
+            padding: 14px 24px;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 16px;
             font-weight: 600;
-            transition: background-color 0.3s;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(86, 100, 210, 0.2);
+            position: relative;
+            overflow: hidden;
         }
+        
         button:hover {
-            background-color: #4254c7;
+            box-shadow: 0 6px 15px rgba(86, 100, 210, 0.3);
+            transform: translateY(-2px);
         }
+        
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(86, 100, 210, 0.2);
+        }
+        
+        button::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%);
+            transform-origin: 50% 50%;
+        }
+        
+        @keyframes ripple {
+            0% {
+                transform: scale(0, 0);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(100, 100);
+                opacity: 0;
+            }
+        }
+        
+        button:focus:not(:active)::after {
+            animation: ripple 1s ease-out;
+        }
+        
         .budget-score {
-            font-size: 24px;
+            font-size: 36px;
             font-weight: bold;
             text-align: center;
-            padding: 15px;
-            border-radius: 50%;
-            width: 80px;
-            height: 80px;
-            line-height: 80px;
+            width: 120px;
+            height: 120px;
+            line-height: 120px;
             margin: 0 auto 20px;
             color: white;
+            border-radius: 50%;
+            position: relative;
+            background: conic-gradient(var(--success-color) 0%, var(--success-color) 85%, #e0e0e0 85%, #e0e0e0 100%);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.5s ease;
         }
+        
+        .budget-score::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            border-radius: 50%;
+            background: white;
+        }
+        
+        .budget-score span {
+            position: relative;
+            z-index: 2;
+        }
+        
         .good {
-            background-color: var(--success-color);
+            background: conic-gradient(var(--success-color) 0%, var(--success-color) var(--percentage), #e0e0e0 var(--percentage), #e0e0e0 100%);
+            color: var(--success-color);
         }
+        
         .warning {
-            background-color: var(--warning-color);
+            background: conic-gradient(var(--warning-color) 0%, var(--warning-color) var(--percentage), #e0e0e0 var(--percentage), #e0e0e0 100%);
+            color: var(--warning-color);
         }
+        
         .danger {
-            background-color: var(--danger-color);
+            background: conic-gradient(var(--danger-color) 0%, var(--danger-color) var(--percentage), #e0e0e0 var(--percentage), #e0e0e0 100%);
+            color: var(--danger-color);
         }
+        
         .expense-list {
             max-height: 300px;
             overflow-y: auto;
+            padding-right: 5px;
         }
+        
+        .expense-list::-webkit-scrollbar {
+            width: 5px;
+        }
+        
+        .expense-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .expense-list::-webkit-scrollbar-thumb {
+            background: #c5c9e0;
+            border-radius: 10px;
+        }
+        
         .expense-item {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
+            padding: 15px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            background-color: #f8f9fc;
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            animation-duration: 0.5s;
         }
-        .expense-item:last-child {
-            border-bottom: none;
+        
+        .expense-amount {
+            font-weight: bold;
+            color: var(--primary-color);
         }
+        
         .chart-container {
             position: relative;
             height: 300px;
             width: 100%;
         }
+        
         .insights {
             background-color: #e3f2fd;
-            padding: 15px;
-            border-radius: 8px;
+            padding: 20px;
+            border-radius: 10px;
             margin-top: 20px;
+            border-left: 4px solid #4b97ff;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
         }
+        
         .alert {
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 10px;
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 12px;
             font-weight: 600;
+            animation-duration: 0.7s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
         }
+        
         .alert-warning {
             background-color: #fff3e0;
             color: #e65100;
+            border-left: 3px solid #e65100;
         }
+        
         .alert-danger {
             background-color: #ffebee;
             color: #c62828;
+            border-left: 3px solid #c62828;
         }
+        
         .alert-info {
             background-color: #e1f5fe;
             color: #0277bd;
+            border-left: 3px solid #0277bd;
         }
+        
         .tip {
-            margin-top: 5px;
+            margin-top: 10px;
             font-style: italic;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 6px;
+        }
+        
+        .category-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 15px;
+            color: white;
+            margin-right: 5px;
+        }
+        
+        .category-food {
+            background-color: #4CAF50;
+        }
+        
+        .category-housing {
+            background-color: #2196F3;
+        }
+        
+        .category-transportation {
+            background-color: #FF9800;
+        }
+        
+        .category-entertainment {
+            background-color: #9C27B0;
+        }
+        
+        .category-shopping {
+            background-color: #F44336;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .logout-btn {
+            background: none;
+            color: #666;
+            box-shadow: none;
+            padding: 8px 15px;
+        }
+        
+        .logout-btn:hover {
+            color: var(--primary-color);
+            background: rgba(86, 100, 210, 0.1);
+            box-shadow: none;
+        }
+        
+        /* Animation classes */
+        .fade-in {
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .slide-up {
+            animation: slideUp 0.5s;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.5s;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        /* Loading animation */
+        .loader {
+            display: inline-block;
+            position: relative;
+            width: 80px;
+            height: 80px;
+            margin: 0 auto;
+        }
+        
+        .loader div {
+            position: absolute;
+            top: 33px;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            animation-timing-function: cubic-bezier(0, 1, 1, 0);
+        }
+        
+        .loader div:nth-child(1) {
+            left: 8px;
+            animation: loader1 0.6s infinite;
+        }
+        
+        .loader div:nth-child(2) {
+            left: 8px;
+            animation: loader2 0.6s infinite;
+        }
+        
+        .loader div:nth-child(3) {
+            left: 32px;
+            animation: loader2 0.6s infinite;
+        }
+        
+        .loader div:nth-child(4) {
+            left: 56px;
+            animation: loader3 0.6s infinite;
+        }
+        
+        @keyframes loader1 {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes loader3 {
+            0% { transform: scale(1); }
+            100% { transform: scale(0); }
+        }
+        
+        @keyframes loader2 {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(24px, 0); }
+        }
+        
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+        
+        .toast {
+            background-color: white;
+            color: #333;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-width: 300px;
+            max-width: 450px;
+            transform: translateX(120%);
+            animation: slideInRight 0.3s forwards, fadeOut 0.5s 2.5s forwards;
+        }
+        
+        .toast.success {
+            border-left: 5px solid var(--success-color);
+        }
+        
+        .toast.error {
+            border-left: 5px solid var(--danger-color);
+        }
+        
+        .toast.info {
+            border-left: 5px solid var(--primary-color);
+        }
+        
+        .toast-content {
+            flex-grow: 1;
+        }
+        
+        .toast-close {
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            padding: 0;
+            margin-left: 10px;
+            box-shadow: none;
+        }
+        
+        .toast-close:hover {
+            color: #333;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(120%); }
+            to { transform: translateX(0); }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; visibility: hidden; }
         }
     </style>
 </head>
 <body>
-    <h1>AI Budget Tracker</h1>
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
     
-    <div class="container">
-        <div>
-            <!-- Input Form -->
-            <div class="card">
-                <h2>Add New Expense</h2>
-                <div class="form-group">
-                    <label for="expense-description">Description</label>
-                    <input type="text" id="expense-description" placeholder="What did you spend on?">
-                </div>
-                <div class="form-group">
-                    <label for="expense-amount">Amount ($)</label>
-                    <input type="number" id="expense-amount" min="0" step="0.01" placeholder="0.00">
-                </div>
-                <div class="form-group">
-                    <label for="expense-category">Category</label>
-                    <select id="expense-category">
-                        <option value="food">Food & Dining</option>
-                        <option value="housing">Housing & Utilities</option>
-                        <option value="transportation">Transportation</option>
-                        <option value="entertainment">Entertainment</option>
-                        <option value="shopping">Shopping</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="expense-date">Date</label>
-                    <input type="date" id="expense-date">
-                </div>
-                <button id="add-expense">Add Expense</button>
-            </div>
+    <!-- Login Container -->
+    <div id="login-container" class="animate__animated animate__fadeIn">
+        <div class="login-card">
+            <div class="login-logo">💰</div>
+            <h1>Budget Tracker</h1>
+            <p>Log in to manage your finances smartly</p>
             
-            <!-- Budget Setup -->
-            <div class="card">
-                <h2>Budget Settings</h2>
+            <form id="login-form">
                 <div class="form-group">
-                    <label for="budget-food">Food & Dining Budget ($)</label>
-                    <input type="number" id="budget-food" value="500">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" placeholder="Enter your username" required>
                 </div>
                 <div class="form-group">
-                    <label for="budget-housing">Housing & Utilities Budget ($)</label>
-                    <input type="number" id="budget-housing" value="1200">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter your password" required>
                 </div>
-                <div class="form-group">
-                    <label for="budget-transportation">Transportation Budget ($)</label>
-                    <input type="number" id="budget-transportation" value="300">
+                <button type="submit" id="login-button">Log In</button>
+            </form>
+            
+            <p style="margin-top: 20px; font-size: 14px; color: #666;">
+                Don't have an account? <a href="#" style="color: var(--primary-color);">Sign up</a>
+            </p>
+        </div>
+    </div>
+    
+    <!-- App Container (Hidden by Default) -->
+    <div id="app-container" class="animate__animated animate__fadeIn">
+        <div class="header">
+            <h1>AI Budget Tracker</h1>
+            <div class="user-profile">
+                <div class="avatar" id="user-avatar">JS</div>
+                <div>
+                    <div id="user-name">John Smith</div>
+                    <button class="logout-btn" id="logout-button">Logout</button>
                 </div>
-                <div class="form-group">
-                    <label for="budget-entertainment">Entertainment Budget ($)</label>
-                    <input type="number" id="budget-entertainment" value="200">
-                </div>
-                <div class="form-group">
-                    <label for="budget-shopping">Shopping Budget ($)</label>
-                    <input type="number" id="budget-shopping" value="300">
-                </div>
-                <button id="save-budget">Save Budget</button>
             </div>
         </div>
         
-        <div>
-            <!-- Budget Score -->
-            <div class="card">
-                <h2>Budget Health</h2>
-                <div class="budget-score good" id="budget-score">85</div>
-                <div id="score-explanation">Your budget is in good health! Keep it up.</div>
+        <div class="container">
+            <div>
+                <!-- Input Form -->
+                <div class="card slide-up">
+                    <h2>Add New Expense</h2>
+                    <div class="form-group">
+                        <label for="expense-description">Description</label>
+                        <input type="text" id="expense-description" placeholder="What did you spend on?">
+                    </div>
+                    <div class="form-group">
+                        <label for="expense-amount">Amount ($)</label>
+                        <input type="number" id="expense-amount" min="0" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="expense-category">Category</label>
+                        <select id="expense-category">
+                            <option value="food">Food & Dining</option>
+                            <option value="housing">Housing & Utilities</option>
+                            <option value="transportation">Transportation</option>
+                            <option value="entertainment">Entertainment</option>
+                            <option value="shopping">Shopping</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="expense-date">Date</label>
+                        <input type="date" id="expense-date">
+                    </div>
+                    <button id="add-expense">Add Expense</button>
+                </div>
                 
-                <div class="insights" id="ai-insights">
-                    <h3>AI Insights</h3>
-                    <div id="insights-content">
-                        <div class="alert alert-info">Welcome! Add your expenses to get personalized insights.</div>
+                <!-- Budget Setup -->
+                <div class="card slide-up" style="animation-delay: 0.1s;">
+                    <h2>Budget Settings</h2>
+                    <div class="form-group">
+                        <label for="budget-food">Food & Dining Budget ($)</label>
+                        <input type="number" id="budget-food" value="500">
+                    </div>
+                    <div class="form-group">
+                        <label for="budget-housing">Housing & Utilities Budget ($)</label>
+                        <input type="number" id="budget-housing" value="1200">
+                    </div>
+                    <div class="form-group">
+                        <label for="budget-transportation">Transportation Budget ($)</label>
+                        <input type="number" id="budget-transportation" value="300">
+                    </div>
+                    <div class="form-group">
+                        <label for="budget-entertainment">Entertainment Budget ($)</label>
+                        <input type="number" id="budget-entertainment" value="200">
+                    </div>
+                    <div class="form-group">
+                        <label for="budget-shopping">Shopping Budget ($)</label>
+                        <input type="number" id="budget-shopping" value="300">
+                    </div>
+                    <button id="save-budget">Save Budget</button>
+                </div>
+            </div>
+            
+            <div>
+                <!-- Budget Score -->
+                <div class="card slide-up" style="animation-delay: 0.2s;">
+                    <h2>Budget Health</h2>
+                    <div class="budget-score good" id="budget-score"><span>85</span></div>
+                    <div id="score-explanation" style="text-align: center; margin-bottom: 20px;">Your budget is in good health! Keep it up.</div>
+                    
+                    <div class="insights" id="ai-insights">
+                        <h3>AI Insights</h3>
+                        <div id="insights-content">
+                            <div class="alert alert-info animate__animated animate__fadeIn">Welcome! Add your expenses to get personalized insights.</div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Expense Chart -->
-            <div class="card">
-                <h2>Spending Overview</h2>
-                <div class="chart-container">
-                    <canvas id="expense-chart"></canvas>
+                
+                <!-- Expense Chart -->
+                <div class="card slide-up" style="animation-delay: 0.3s;">
+                    <h2>Spending Overview</h2>
+                    <div class="chart-container">
+                        <canvas id="expense-chart"></canvas>
+                    </div>
                 </div>
-            </div>
-            
-            <!-- Recent Expenses -->
-            <div class="card">
-                <h2>Recent Expenses</h2>
-                <div class="expense-list" id="expense-list">
-                    <!-- Expenses will be added here -->
+                
+                <!-- Recent Expenses -->
+                <div class="card slide-up" style="animation-delay: 0.4s;">
+                    <h2>Recent Expenses</h2>
+                    <div class="expense-list" id="expense-list">
+                        <!-- Expenses will be added here -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -243,27 +698,155 @@
             shopping: 300
         };
         
+        // User management
+        let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+        const users = JSON.parse(localStorage.getItem('users')) || [
+            { username: 'demo', password: 'password', displayName: 'Demo User', initials: 'DU' }
+        ];
+        
+        // Check if user is already logged in
+        if (currentUser) {
+            showApp();
+            updateUserInfo();
+        }
+        
+        // Login form event listener
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            // Show loading animation
+            const loginButton = document.getElementById('login-button');
+            const originalButtonText = loginButton.textContent;
+            loginButton.innerHTML = '<div class="loader"><div></div><div></div><div></div><div></div></div>';
+            loginButton.disabled = true;
+            
+            // Simulate a network request
+            setTimeout(() => {
+                const user = users.find(u => u.username === username && u.password === password);
+                
+                if (user) {
+                    // Successful login
+                    currentUser = {
+                        username: user.username,
+                        displayName: user.displayName,
+                        initials: user.initials
+                    };
+                    
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    
+                    // Hide login form with animation
+                    document.getElementById('login-container').classList.remove('animate__fadeIn');
+                    document.getElementById('login-container').classList.add('animate__fadeOut');
+                    
+                    setTimeout(() => {
+                        showApp();
+                        updateUserInfo();
+                        showToast('Successfully logged in!', 'success');
+                    }, 500);
+                } else {
+                    // Failed login
+                    showToast('Invalid username or password', 'error');
+                    loginButton.textContent = originalButtonText;
+                    loginButton.disabled = false;
+                }
+            }, 1000);
+        });
+        
+        // Logout button event listener
+        document.getElementById('logout-button').addEventListener('click', function() {
+            // Hide app with animation
+            document.getElementById('app-container').classList.remove('animate__fadeIn');
+            document.getElementById('app-container').classList.add('animate__fadeOut');
+            
+            setTimeout(() => {
+                // Clear current user
+                localStorage.removeItem('currentUser');
+                currentUser = null;
+                
+                // Show login form
+                document.getElementById('login-container').style.display = 'flex';
+                document.getElementById('login-container').classList.remove('animate__fadeOut');
+                document.getElementById('login-container').classList.add('animate__fadeIn');
+                document.getElementById('app-container').style.display = 'none';
+                
+                // Clear form fields
+                document.getElementById('username').value = '';
+                document.getElementById('password').value = '';
+                
+                showToast('You have been logged out', 'info');
+            }, 500);
+        });
+        
+        // Function to show the app
+        function showApp() {
+            document.getElementById('login-container').style.display = 'none';
+            document.getElementById('app-container').style.display = 'block';
+            document.getElementById('app-container').classList.remove('animate__fadeOut');
+            document.getElementById('app-container').classList.add('animate__fadeIn');
+            
+            // Initialize the app data
+            loadInitialData();
+        }
+        
+        // Update user info in the header
+        function updateUserInfo() {
+            if (currentUser) {
+                document.getElementById('user-name').textContent = currentUser.displayName;
+                document.getElementById('user-avatar').textContent = currentUser.initials;
+            }
+        }
+        
         // Load saved budgets into form
-        document.getElementById('budget-food').value = budgets.food;
-        document.getElementById('budget-housing').value = budgets.housing;
-        document.getElementById('budget-transportation').value = budgets.transportation;
-        document.getElementById('budget-entertainment').value = budgets.entertainment;
-        document.getElementById('budget-shopping').value = budgets.shopping;
+        function loadInitialData() {
+            document.getElementById('budget-food').value = budgets.food;
+            document.getElementById('budget-housing').value = budgets.housing;
+            document.getElementById('budget-transportation').value = budgets.transportation;
+            document.getElementById('budget-entertainment').value = budgets.entertainment;
+            document.getElementById('budget-shopping').value = budgets.shopping;
+            
+            // Set today's date as default
+            document.getElementById('expense-date').valueAsDate = new Date();
+            
+            // Load initial data
+            updateExpenseList();
+            updateCharts();
+            updateBudgetScore();
+            generateAIInsights();
+        }
         
-        // Set today's date as default
-        document.getElementById('expense-date').valueAsDate = new Date();
-        
-        // Initialize charts
-        let expenseChart;
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <strong>${type === 'success' ? '✓ Success' : type === 'error' ? '✗ Error' : 'ℹ Info'}</strong>
+                    <div>${message}</div>
+                </div>
+                <button class="toast-close">×</button>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            // Add close event
+            toast.querySelector('.toast-close').addEventListener('click', function() {
+                toast.remove();
+            });
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
         
         // Event Listeners
         document.getElementById('add-expense').addEventListener('click', addExpense);
         document.getElementById('save-budget').addEventListener('click', saveBudget);
-        
-        // Load initial data
-        updateExpenseList();
-        updateCharts();
-        updateBudgetScore();
         
         // Add expense function
         function addExpense() {
@@ -273,7 +856,7 @@
             const date = document.getElementById('expense-date').value;
             
             if (!description || isNaN(amount) || amount <= 0 || !date) {
-                alert('Please fill in all fields correctly');
+                showToast('Please fill in all fields correctly', 'error');
                 return;
             }
             
@@ -301,7 +884,7 @@
                 amount,
                 category: detectedCategory,
                 date,
-                timestamp: new Date().getTime()
+                timestamp: new Date().toISOString()
             };
             
             expenses.push(newExpense);
@@ -310,16 +893,28 @@
             // Clear form
             document.getElementById('expense-description').value = '';
             document.getElementById('expense-amount').value = '';
-            document.getElementById('expense-category').value = category;
+            document.getElementById('expense-date').valueAsDate = new Date();
             
             // Update UI
             updateExpenseList();
             updateCharts();
             updateBudgetScore();
             generateAIInsights();
+            
+            // Show different toast based on budget condition
+            const categoryBudget = budgets[detectedCategory];
+            const categoryTotal = getCategoryTotal(detectedCategory);
+            
+            if (categoryTotal > categoryBudget) {
+                showToast(`Warning: You've exceeded your ${getCategoryName(detectedCategory)} budget!`, 'error');
+            } else if (categoryTotal > (categoryBudget * 0.8)) {
+                showToast(`You're approaching your ${getCategoryName(detectedCategory)} budget limit`, 'info');
+            } else {
+                showToast('Expense added successfully!', 'success');
+            }
         }
         
-        // Save budget
+        // Save budget settings
         function saveBudget() {
             budgets = {
                 food: parseFloat(document.getElementById('budget-food').value) || 0,
@@ -330,347 +925,382 @@
             };
             
             localStorage.setItem('budgets', JSON.stringify(budgets));
-            alert('Budget saved successfully!');
+            showToast('Budget updated successfully!', 'success');
             
+            // Update UI
             updateBudgetScore();
+            updateCharts();
             generateAIInsights();
         }
         
         // Update expense list
         function updateExpenseList() {
-            const listElement = document.getElementById('expense-list');
-            listElement.innerHTML = '';
+            const expenseList = document.getElementById('expense-list');
+            expenseList.innerHTML = '';
             
             // Sort expenses by date (newest first)
             const sortedExpenses = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date));
             
-            // Show only the last 10 expenses
-            sortedExpenses.slice(0, 10).forEach(expense => {
-                const expenseEl = document.createElement('div');
-                expenseEl.className = 'expense-item';
-                expenseEl.innerHTML = `
-                    <div>
-                        <strong>${expense.description}</strong><br>
-                        <small>${formatDate(expense.date)} - ${capitalizeFirstLetter(expense.category)}</small>
-                    </div>
-                    <div>$${expense.amount.toFixed(2)}</div>
-                `;
-                listElement.appendChild(expenseEl);
-            });
+            // Take only the 10 most recent expenses
+            const recentExpenses = sortedExpenses.slice(0, 10);
             
-            if (expenses.length === 0) {
-                listElement.innerHTML = '<div class="expense-item">No expenses recorded yet</div>';
+            if (recentExpenses.length === 0) {
+                const emptyMessage = document.createElement('div');
+                emptyMessage.textContent = 'No expenses yet. Add your first expense!';
+                emptyMessage.style.textAlign = 'center';
+                emptyMessage.style.padding = '20px';
+                emptyMessage.style.color = '#666';
+                expenseList.appendChild(emptyMessage);
+                return;
             }
+            
+            // Add expenses to the list
+            recentExpenses.forEach((expense, index) => {
+                const expenseItem = document.createElement('div');
+                expenseItem.className = 'expense-item animate__animated animate__fadeIn';
+                expenseItem.style.animationDelay = `${index * 0.05}s`;
+                
+                // Format date
+                const expenseDate = new Date(expense.date);
+                const formattedDate = expenseDate.toLocaleDateString();
+                
+                expenseItem.innerHTML = `
+                    <div>
+                        <div>${expense.description}</div>
+                        <div style="font-size: 12px; color: #666;">${formattedDate}</div>
+                        <span class="category-badge category-${expense.category}">${getCategoryName(expense.category)}</span>
+                    </div>
+                    <div class="expense-amount">$${expense.amount.toFixed(2)}</div>
+                `;
+                
+                // Add delete button
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = '×';
+                deleteBtn.style.background = 'none';
+                deleteBtn.style.border = 'none';
+                deleteBtn.style.color = '#666';
+                deleteBtn.style.cursor = 'pointer';
+                deleteBtn.style.fontSize = '20px';
+                deleteBtn.style.padding = '0 5px';
+                deleteBtn.style.boxShadow = 'none';
+                
+                deleteBtn.addEventListener('click', () => {
+                    // Remove expense from array
+                    expenses = expenses.filter(e => e.id !== expense.id);
+                    localStorage.setItem('expenses', JSON.stringify(expenses));
+                    
+                    // Remove item with animation
+                    expenseItem.classList.add('animate__fadeOut');
+                    setTimeout(() => {
+                        updateExpenseList();
+                        updateCharts();
+                        updateBudgetScore();
+                        generateAIInsights();
+                        showToast('Expense deleted', 'info');
+                    }, 300);
+                });
+                
+                expenseItem.appendChild(deleteBtn);
+                expenseList.appendChild(expenseItem);
+            });
         }
         
         // Update charts
         function updateCharts() {
+            // Get canvas context
             const ctx = document.getElementById('expense-chart').getContext('2d');
             
-            // Process data for charts
-            const categoryTotals = {
-                food: 0,
-                housing: 0,
-                transportation: 0,
-                entertainment: 0,
-                shopping: 0
-            };
-            
-            // Get current month expenses
-            const now = new Date();
-            const currentMonth = now.getMonth();
-            const currentYear = now.getFullYear();
-            
-            const thisMonthExpenses = expenses.filter(expense => {
-                const expenseDate = new Date(expense.date);
-                return expenseDate.getMonth() === currentMonth && 
-                       expenseDate.getFullYear() === currentYear;
-            });
-            
-            thisMonthExpenses.forEach(expense => {
-                categoryTotals[expense.category] += expense.amount;
-            });
-            
-            // Destroy previous chart if it exists
-            if (expenseChart) {
-                expenseChart.destroy();
+            // Destroy existing chart if it exists
+            if (window.expenseChart) {
+                window.expenseChart.destroy();
             }
             
-            // Create new chart
-            expenseChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Food', 'Housing', 'Transportation', 'Entertainment', 'Shopping'],
-                    datasets: [
-                        {
-                            label: 'Current Spending',
-                            data: [
-                                categoryTotals.food,
-                                categoryTotals.housing,
-                                categoryTotals.transportation,
-                                categoryTotals.entertainment,
-                                categoryTotals.shopping
-                            ],
-                            backgroundColor: '#5664d2'
-                        },
-                        {
-                            label: 'Budget',
-                            data: [
-                                budgets.food,
-                                budgets.housing,
-                                budgets.transportation,
-                                budgets.entertainment,
-                                budgets.shopping
-                            ],
-                            backgroundColor: 'rgba(86, 100, 210, 0.2)',
-                            borderColor: '#5664d2',
-                            borderWidth: 1,
-                            type: 'bar'
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Amount ($)'
+            // Calculate category totals
+            const categoryTotals = {
+                food: getCategoryTotal('food'),
+                housing: getCategoryTotal('housing'),
+                transportation: getCategoryTotal('transportation'),
+                entertainment: getCategoryTotal('entertainment'),
+                shopping: getCategoryTotal('shopping')
+            };
+            
+            // Calculate percentages of budget used
+            const percentages = {
+                food: (categoryTotals.food / budgets.food) * 100,
+                housing: (categoryTotals.housing / budgets.housing) * 100,
+                transportation: (categoryTotals.transportation / budgets.transportation) * 100,
+                entertainment: (categoryTotals.entertainment / budgets.entertainment) * 100,
+                shopping: (categoryTotals.shopping / budgets.shopping) * 100
+            };
+            
+            // Create chart data
+            const chartData = {
+                labels: [
+                    'Food & Dining',
+                    'Housing & Utilities',
+                    'Transportation',
+                    'Entertainment',
+                    'Shopping'
+                ],
+                datasets: [
+                    {
+                        label: 'Current Spending ($)',
+                        data: [
+                            categoryTotals.food,
+                            categoryTotals.housing,
+                            categoryTotals.transportation,
+                            categoryTotals.entertainment,
+                            categoryTotals.shopping
+                        ],
+                        backgroundColor: 'rgba(86, 100, 210, 0.7)',
+                        borderColor: 'rgba(86, 100, 210, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Budget ($)',
+                        data: [
+                            budgets.food,
+                            budgets.housing,
+                            budgets.transportation,
+                            budgets.entertainment,
+                            budgets.shopping
+                        ],
+                        backgroundColor: 'rgba(150, 150, 150, 0.3)',
+                        borderColor: 'rgba(150, 150, 150, 0.7)',
+                        borderWidth: 1,
+                        borderDash: [5, 5]
+                    }
+                ]
+            };
+            
+            // Create chart options
+            const chartOptions = {
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
+                                }
+                                return label;
                             }
                         }
                     }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value;
+                            }
+                        }
+                    }
+                },
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 1000
                 }
+            };
+            
+            // Create new chart
+            window.expenseChart = new Chart(ctx, {
+                type: 'bar',
+                data: chartData,
+                options: chartOptions
             });
         }
         
-        // Calculate and update budget score
+        // Update budget score
         function updateBudgetScore() {
-            // Calculate current month's expenses by category
-            const now = new Date();
-            const currentMonth = now.getMonth();
-            const currentYear = now.getFullYear();
+            const budgetScore = document.getElementById('budget-score');
+            const scoreExplanation = document.getElementById('score-explanation');
             
-            const categoryTotals = {
-                food: 0,
-                housing: 0,
-                transportation: 0,
-                entertainment: 0,
-                shopping: 0
-            };
+            // Calculate overall budget health
+            const totalBudget = Object.values(budgets).reduce((sum, budget) => sum + budget, 0);
+            const totalSpent = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+            const budgetPercentage = (totalSpent / totalBudget) * 100;
             
-            const thisMonthExpenses = expenses.filter(expense => {
-                const expenseDate = new Date(expense.date);
-                return expenseDate.getMonth() === currentMonth && 
-                       expenseDate.getFullYear() === currentYear;
-            });
+            // Calculate score based on budget percentage
+            let score = 100;
             
-            thisMonthExpenses.forEach(expense => {
-                categoryTotals[expense.category] += expense.amount;
-            });
-            
-            // Calculate percentage of budget used in each category
-            const categoryPercentages = {};
-            let totalBudgetUsed = 0;
-            let totalBudget = 0;
-            
+            // Deduct points for exceeding category budgets
             for (const category in budgets) {
-                const budget = budgets[category];
-                const spent = categoryTotals[category] || 0;
-                const percentage = budget > 0 ? (spent / budget) * 100 : 0;
-                categoryPercentages[category] = percentage;
+                const categoryTotal = getCategoryTotal(category);
+                const categoryBudget = budgets[category];
                 
-                totalBudgetUsed += spent;
-                totalBudget += budget;
-            }
-            
-            // Calculate overall score (100 - average percentage used)
-            const overallPercentage = totalBudget > 0 ? (totalBudgetUsed / totalBudget) * 100 : 0;
-            let score = Math.max(0, Math.min(100, Math.round(100 - overallPercentage)));
-            
-            // If any category is over budget, penalize the score
-            for (const category in categoryPercentages) {
-                if (categoryPercentages[category] > 100) {
-                    score -= 5 * Math.floor((categoryPercentages[category] - 100) / 10);
+                if (categoryTotal > categoryBudget) {
+                    // Deduct points based on how much the budget is exceeded
+                    const excessPercentage = (categoryTotal - categoryBudget) / categoryBudget;
+                    score -= excessPercentage * 20; // Deduct up to 20 points per category
                 }
             }
             
-            // Make sure score is between 0 and 100
-            score = Math.max(0, Math.min(100, score));
+            // Deduct points for overall spending relative to budget
+            if (budgetPercentage > 100) {
+                score -= (budgetPercentage - 100) * 0.5; // Deduct 0.5 points for each 1% over budget
+            } else if (budgetPercentage > 90) {
+                score -= (budgetPercentage - 90) * 0.3; // Deduct 0.3 points for each 1% approaching budget
+            }
+            
+            // Ensure score stays within 0-100 range
+            score = Math.max(0, Math.min(100, Math.round(score)));
             
             // Update score display
-            const scoreElement = document.getElementById('budget-score');
-            scoreElement.textContent = score;
+            budgetScore.innerHTML = `<span>${score}</span>`;
             
-            // Update score color
-            scoreElement.className = 'budget-score';
-            if (score >= 70) {
-                scoreElement.classList.add('good');
-                document.getElementById('score-explanation').textContent = 'Your budget is in good health! Keep it up.';
-            } else if (score >= 40) {
-                scoreElement.classList.add('warning');
-                document.getElementById('score-explanation').textContent = 'Your budget needs attention. Review spending in critical categories.';
+            // Update class based on score
+            budgetScore.className = 'budget-score';
+            if (score >= 80) {
+                budgetScore.classList.add('good');
+                scoreExplanation.textContent = 'Your budget is in good health! Keep it up.';
+            } else if (score >= 60) {
+                budgetScore.classList.add('warning');
+                scoreExplanation.textContent = 'Your budget is okay, but there\'s room for improvement.';
             } else {
-                scoreElement.classList.add('danger');
-                document.getElementById('score-explanation').textContent = 'Your budget is in critical condition. Immediate action required!';
+                budgetScore.classList.add('danger');
+                scoreExplanation.textContent = 'Your budget needs attention. Check your spending habits.';
             }
             
-            return {
-                score,
-                categoryPercentages,
-                categoryTotals
-            };
+            // Set the custom property for the circle percentage
+            budgetScore.style.setProperty('--percentage', `${score}%`);
         }
         
-        // Generate AI Insights
+        // Generate AI insights
         function generateAIInsights() {
-            const insightsElement = document.getElementById('insights-content');
-            const budgetData = updateBudgetScore();
+            const insightsContent = document.getElementById('insights-content');
+            insightsContent.innerHTML = '';
             
-            // Clear previous insights
-            insightsElement.innerHTML = '';
-            
-            // If no expenses yet, show default message
+            // Check if we have enough data
             if (expenses.length === 0) {
-                insightsElement.innerHTML = '<div class="alert alert-info">Welcome! Add your expenses to get personalized insights.</div>';
+                const emptyMessage = document.createElement('div');
+                emptyMessage.className = 'alert alert-info';
+                emptyMessage.textContent = 'Add your expenses to get personalized insights.';
+                insightsContent.appendChild(emptyMessage);
                 return;
             }
             
-            // Check for categories that are over or close to budget
-            const alerts = [];
-            const tips = [];
-            
-            for (const category in budgetData.categoryPercentages) {
-                const percentage = budgetData.categoryPercentages[category];
-                const spent = budgetData.categoryTotals[category];
-                const budget = budgets[category];
-                const remaining = budget - spent;
+            // Check for overbudget categories
+            const overBudgetCategories = [];
+            for (const category in budgets) {
+                const categoryTotal = getCategoryTotal(category);
+                const categoryBudget = budgets[category];
                 
-                // Categories over budget
-                if (percentage >= 100) {
-                    alerts.push(`
-                        <div class="alert alert-danger">
-                            You've exceeded your ${capitalizeFirstLetter(category)} budget by $${(spent - budget).toFixed(2)}!
-                        </div>
-                    `);
-                    
-                    // Generate category-specific tips
-                    if (category === 'food') {
-                        tips.push('Try meal prepping to reduce food costs');
-                    } else if (category === 'entertainment') {
-                        tips.push('Look for free community events instead of paid entertainment');
-                    } else if (category === 'transportation') {
-                        tips.push('Consider carpooling or public transit to save on transportation');
-                    } else if (category === 'shopping') {
-                        tips.push('Make a shopping list and stick to it to avoid impulse purchases');
-                    }
-                } 
-                // Categories close to budget (80%+)
-                else if (percentage >= 80) {
-                    alerts.push(`
-                        <div class="alert alert-warning">
-                            Warning: You've used ${percentage.toFixed(0)}% of your ${capitalizeFirstLetter(category)} budget. 
-                            Only $${remaining.toFixed(2)} remaining.
-                        </div>
-                    `);
+                if (categoryTotal > categoryBudget) {
+                    overBudgetCategories.push({
+                        name: getCategoryName(category),
+                        amount: categoryTotal - categoryBudget,
+                        percentage: (categoryTotal / categoryBudget) * 100 - 100
+                    });
                 }
             }
             
-            // Spending pattern detection (simple anomaly detection)
-            const recentExpenses = [...expenses].sort((a, b) => b.timestamp - a.timestamp).slice(0, 5);
-            const categoryFrequency = {};
+            // Sort by percentage over budget
+            overBudgetCategories.sort((a, b) => b.percentage - a.percentage);
             
-            recentExpenses.forEach(expense => {
-                categoryFrequency[expense.category] = (categoryFrequency[expense.category] || 0) + 1;
+            // Add warnings for over-budget categories
+            if (overBudgetCategories.length > 0) {
+                overBudgetCategories.forEach(category => {
+                    const alert = document.createElement('div');
+                    alert.className = 'alert alert-warning animate__animated animate__fadeIn';
+                    alert.innerHTML = `
+                        <strong>Budget Alert:</strong> You've exceeded your ${category.name} budget by 
+                        <strong>$${category.amount.toFixed(2)}</strong> (${category.percentage.toFixed(1)}% over).
+                    `;
+                    insightsContent.appendChild(alert);
+                });
+                
+                // Add a tip for the most over-budget category
+                const worstCategory = overBudgetCategories[0];
+                
+                // Generate a contextual tip
+                let tip = '';
+                switch (worstCategory.name.toLowerCase()) {
+                    case 'food & dining':
+                        tip = 'Try meal prepping at home or using grocery shopping apps to find deals.';
+                        break;
+                    case 'housing & utilities':
+                        tip = 'Consider checking for energy leaks or unplugging electronics when not in use.';
+                        break;
+                    case 'transportation':
+                        tip = 'Consider carpooling, public transit, or combining errands into single trips.';
+                        break;
+                    case 'entertainment':
+                        tip = 'Look for free events in your area or take advantage of subscription trials.';
+                        break;
+                    case 'shopping':
+                        tip = 'Wait 24 hours before making non-essential purchases to avoid impulse buys.';
+                        break;
+                }
+                
+                const tipDiv = document.createElement('div');
+                tipDiv.className = 'tip animate__animated animate__fadeIn';
+                tipDiv.style.animationDelay = '0.3s';
+                tipDiv.innerHTML = `<strong>Tip:</strong> ${tip}`;
+                insightsContent.appendChild(tipDiv);
+            } else {
+                // Everything is under budget
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-info animate__animated animate__fadeIn';
+                alert.innerHTML = '<strong>Great job!</strong> All your spending is within budget.';
+                insightsContent.appendChild(alert);
+            }
+            
+            // Find spending trends
+            const now = new Date();
+            const lastWeekExpenses = expenses.filter(e => {
+                const expenseDate = new Date(e.date);
+                const daysDiff = (now - expenseDate) / (1000 * 60 * 60 * 24);
+                return daysDiff <= 7;
             });
             
-            const mostFrequentCategory = Object.entries(categoryFrequency)
-                .sort((a, b) => b[1] - a[1])
-                .map(entry => entry[0])[0];
+            // Check if spending has increased
+            if (lastWeekExpenses.length >= 3) {
+                const lastWeekTotal = lastWeekExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+                const averageDailySpend = lastWeekTotal / 7;
                 
-            if (mostFrequentCategory && categoryFrequency[mostFrequentCategory] >= 3) {
-                alerts.push(`
-                    <div class="alert alert-info">
-                        Pattern detected: You've made several recent purchases in ${capitalizeFirstLetter(mostFrequentCategory)}.
-                    </div>
-                `);
-            }
-            
-            // Monthly spending prediction
-            const now = new Date();
-            const currentDay = now.getDate();
-            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-            const monthProgress = currentDay / daysInMonth;
-            
-            let predictedOverspendingCategories = [];
-            
-            for (const category in budgetData.categoryPercentages) {
-                const percentage = budgetData.categoryPercentages[category];
-                
-                // If spending rate is higher than month progress
-                if (percentage > (monthProgress * 100 * 1.2) && percentage > 40) {
-                    predictedOverspendingCategories.push(category);
+                if (averageDailySpend > 50) { // Arbitrary threshold
+                    const alert = document.createElement('div');
+                    alert.className = 'alert alert-info animate__animated animate__fadeIn';
+                    alert.style.animationDelay = '0.6s';
+                    alert.innerHTML = `
+                        <strong>Spending Trend:</strong> Your average daily spend is <strong>$${averageDailySpend.toFixed(2)}</strong> 
+                        over the past week. This might be higher than normal.
+                    `;
+                    insightsContent.appendChild(alert);
                 }
-            }
-            
-            if (predictedOverspendingCategories.length > 0) {
-                const categories = predictedOverspendingCategories
-                    .map(cat => capitalizeFirstLetter(cat))
-                    .join(', ');
-                    
-                alerts.push(`
-                    <div class="alert alert-warning">
-                        Prediction: Based on your current spending rate, you may exceed your budget in: ${categories}
-                    </div>
-                `);
-            }
-            
-            // Add all alerts to insights
-            if (alerts.length > 0) {
-                insightsElement.innerHTML += alerts.join('');
-            } else {
-                insightsElement.innerHTML += `
-                    <div class="alert alert-info">
-                        You're doing well at staying within your budget! Keep it up.
-                    </div>
-                `;
-            }
-            
-            // Add tips section
-            if (tips.length > 0) {
-                insightsElement.innerHTML += `
-                    <h4>Personalized Tips</h4>
-                    ${tips.map(tip => `<div class="tip">💡 ${tip}</div>`).join('')}
-                `;
-            }
-            
-            // Add savings potential
-            const totalMonthlyExpenses = Object.values(budgetData.categoryTotals).reduce((sum, val) => sum + val, 0);
-            const totalMonthlyBudget = Object.values(budgets).reduce((sum, val) => sum + val, 0);
-            
-            if (totalMonthlyBudget > totalMonthlyExpenses) {
-                const savingsPotential = totalMonthlyBudget - totalMonthlyExpenses;
-                insightsElement.innerHTML += `
-                    <div class="alert alert-info" style="margin-top: 15px;">
-                        Savings Potential: You could save up to $${savingsPotential.toFixed(2)} this month if you stay on track!
-                    </div>
-                `;
             }
         }
         
         // Helper functions
-        function formatDate(dateString) {
-            const options = { month: 'short', day: 'numeric' };
-            return new Date(dateString).toLocaleDateString('en-US', options);
+        function getCategoryTotal(category) {
+            return expenses
+                .filter(expense => expense.category === category)
+                .reduce((total, expense) => total + expense.amount, 0);
         }
         
-        function capitalizeFirstLetter(string) {
-            return string.charAt(0).toUpperCase() + string.slice(1);
+        function getCategoryName(category) {
+            const names = {
+                food: 'Food & Dining',
+                housing: 'Housing & Utilities',
+                transportation: 'Transportation',
+                entertainment: 'Entertainment',
+                shopping: 'Shopping'
+            };
+            return names[category] || category;
         }
         
-        // Initialize AI insights
-        generateAIInsights();
+        // Set today's date as default for expense-date input
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.getElementById('expense-date')) {
+                document.getElementById('expense-date').valueAsDate = new Date();
+            }
+        });
     </script>
 </body>
 </html>
